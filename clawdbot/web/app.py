@@ -10,6 +10,8 @@ from fastapi.templating import Jinja2Templates
 from ..config import load_config
 from ..agents.session import SessionManager
 from ..channels.registry import get_channel_registry
+from ..agents.runtime import AgentRuntime
+from ..agents.tools.registry import get_tool_registry
 
 logger = logging.getLogger(__name__)
 
@@ -107,6 +109,206 @@ async def websocket_endpoint(websocket: WebSocket):
         logger.info("WebSocket disconnected")
     except Exception as e:
         logger.error(f"WebSocket error: {e}", exc_info=True)
+
+
+# OpenAI-compatible Chat Completions API
+@app.post("/v1/chat/completions")
+async def chat_completions(request: dict[str, Any]):
+    """OpenAI-compatible Chat Completions API endpoint"""
+    from fastapi import Request as FastAPIRequest
+    from fastapi.responses import StreamingResponse
+    import json
+
+    messages = request.get("messages", [])
+    model = request.get("model", "claude-opus-4-5-20250514")
+    stream = request.get("stream", False)
+    max_tokens = request.get("max_tokens", 4096)
+
+    if not messages:
+        return {"error": {"message": "messages required", "type": "invalid_request_error"}}
+
+    try:
+        config = load_config()
+        runtime = AgentRuntime(model=model)
+        session_manager = SessionManager()
+        
+        # Create temporary session
+        session = session_manager.get_session(f"api-{datetime.now().timestamp()}")
+        
+        # Add messages to session
+        for msg in messages:
+            role = msg.get("role", "")
+            content = msg.get("content", "")
+            if role == "user":
+                session.add_user_message(content)
+            elif role == "assistant":
+                session.add_assistant_message(content)
+
+        # Get last user message
+        last_message = messages[-1].get("content", "") if messages else ""
+
+        if stream:
+            # Streaming response
+            async def generate():
+                accumulated = ""
+                async for event in runtime.run_turn(session, last_message, [], max_tokens):
+                    if event.type == "assistant":
+                        delta = event.data.get("delta", {})
+                        text = delta.get("text", "")
+                        if text:
+                            accumulated += text
+                            chunk = {
+                                "id": f"chatcmpl-{int(datetime.now().timestamp())}",
+                                "object": "chat.completion.chunk",
+                                "created": int(datetime.now().timestamp()),
+                                "model": model,
+                                "choices": [{
+                                    "index": 0,
+                                    "delta": {"content": text},
+                                    "finish_reason": None
+                                }]
+                            }
+                            yield f"data: {json.dumps(chunk)}\n\n"
+                
+                # Final chunk
+                final_chunk = {
+                    "id": f"chatcmpl-{int(datetime.now().timestamp())}",
+                    "object": "chat.completion.chunk",
+                    "created": int(datetime.now().timestamp()),
+                    "model": model,
+                    "choices": [{
+                        "index": 0,
+                        "delta": {},
+                        "finish_reason": "stop"
+                    }]
+                }
+                yield f"data: {json.dumps(final_chunk)}\n\n"
+                yield "data: [DONE]\n\n"
+
+            return StreamingResponse(generate(), media_type="text/event-stream")
+        else:
+            # Non-streaming response
+            accumulated = ""
+            async for event in runtime.run_turn(session, last_message, [], max_tokens):
+                if event.type == "assistant":
+                    delta = event.data.get("delta", {})
+                    text = delta.get("text", "")
+                    accumulated += text
+
+            return {
+                "id": f"chatcmpl-{int(datetime.now().timestamp())}",
+                "object": "chat.completion",
+                "created": int(datetime.now().timestamp()),
+                "model": model,
+                "choices": [{
+                    "index": 0,
+                    "message": {
+                        "role": "assistant",
+                        "content": accumulated
+                    },
+                    "finish_reason": "stop"
+                }],
+                "usage": {
+                    "prompt_tokens": 0,
+                    "completion_tokens": 0,
+                    "total_tokens": 0
+                }
+            }
+
+    except Exception as e:
+        logger.error(f"Chat completions error: {e}", exc_info=True)
+        return {
+            "error": {
+                "message": str(e),
+                "type": "server_error"
+            }
+        }
+
+
+# Tool invocation API
+@app.post("/tools/invoke")
+async def tools_invoke(request: dict[str, Any]):
+    """Direct tool invocation endpoint"""
+    tool_name = request.get("tool")
+    params = request.get("params", {})
+
+    if not tool_name:
+        return {"success": False, "error": "tool name required"}
+
+    try:
+        tool_registry = get_tool_registry()
+        tool = tool_registry.get(tool_name)
+
+        if not tool:
+            return {
+                "success": False,
+                "error": f"Tool '{tool_name}' not found"
+            }
+
+        result = await tool.execute(params)
+
+        return {
+            "success": result.success,
+            "content": result.content,
+            "error": result.error,
+            "metadata": result.metadata
+        }
+
+    except Exception as e:
+        logger.error(f"Tool invocation error: {e}", exc_info=True)
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
+
+# Models list endpoint
+@app.get("/api/models")
+async def api_models():
+    """List available models"""
+    return {
+        "models": [
+            {
+                "id": "anthropic/claude-opus-4-5-20250514",
+                "name": "Claude Opus 4.5",
+                "provider": "anthropic"
+            },
+            {
+                "id": "anthropic/claude-3-5-sonnet-20241022",
+                "name": "Claude 3.5 Sonnet",
+                "provider": "anthropic"
+            },
+            {
+                "id": "openai/gpt-4",
+                "name": "GPT-4",
+                "provider": "openai"
+            },
+            {
+                "id": "openai/gpt-4-turbo",
+                "name": "GPT-4 Turbo",
+                "provider": "openai"
+            }
+        ]
+    }
+
+
+# Tools list endpoint
+@app.get("/api/tools")
+async def api_tools():
+    """List available tools"""
+    tool_registry = get_tool_registry()
+    tools = tool_registry.list_tools()
+
+    return {
+        "tools": [
+            {
+                "name": tool.name,
+                "description": tool.description,
+                "schema": tool.get_schema()
+            }
+            for tool in tools
+        ]
+    }
 
 
 def create_web_app() -> FastAPI:

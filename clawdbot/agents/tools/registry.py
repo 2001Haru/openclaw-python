@@ -1,17 +1,31 @@
 """Tool registry"""
 
-from typing import Optional
+from typing import Optional, Any
 from .base import AgentTool
 from .bash import BashTool
 from .file_ops import ReadFileTool, WriteFileTool, EditFileTool
 from .web import WebFetchTool, WebSearchTool
+from .image import ImageTool
+from .sessions import SessionsListTool, SessionsHistoryTool, SessionsSendTool, SessionsSpawnTool
+from .browser import BrowserTool
+from .cron import CronTool
+from .tts import TTSTool
+from .process import ProcessTool
+from .channel_actions import MessageTool, TelegramActionsTool, DiscordActionsTool, SlackActionsTool, WhatsAppActionsTool
+from .nodes import NodesTool
+from .patch import ApplyPatchTool
+from .canvas import CanvasTool
+from .voice_call import VoiceCallTool
+from ..session import SessionManager
 
 
 class ToolRegistry:
     """Registry of available tools"""
 
-    def __init__(self):
+    def __init__(self, session_manager: Optional[SessionManager] = None, channel_registry: Optional[Any] = None):
         self._tools: dict[str, AgentTool] = {}
+        self._session_manager = session_manager or SessionManager()
+        self._channel_registry = channel_registry
         self._register_default_tools()
 
     def _register_default_tools(self) -> None:
@@ -27,6 +41,37 @@ class ToolRegistry:
         # Web tools
         self.register(WebFetchTool())
         self.register(WebSearchTool())
+        
+        # Image analysis
+        self.register(ImageTool())
+        
+        # Session management
+        self.register(SessionsListTool(self._session_manager))
+        self.register(SessionsHistoryTool(self._session_manager))
+        self.register(SessionsSendTool(self._session_manager))
+        self.register(SessionsSpawnTool(self._session_manager))
+        
+        # Advanced tools
+        self.register(BrowserTool())
+        self.register(CronTool())
+        self.register(TTSTool())
+        self.register(ProcessTool())
+        
+        # Channel actions (if channel registry available)
+        if self._channel_registry:
+            self.register(MessageTool(self._channel_registry))
+            self.register(TelegramActionsTool(self._channel_registry))
+            self.register(DiscordActionsTool(self._channel_registry))
+            self.register(SlackActionsTool(self._channel_registry))
+            self.register(WhatsAppActionsTool(self._channel_registry))
+        
+        # Special features
+        self.register(NodesTool())
+        self.register(CanvasTool())
+        self.register(VoiceCallTool())
+        
+        # Patch tool
+        self.register(ApplyPatchTool())
 
     def register(self, tool: AgentTool) -> None:
         """Register a tool"""

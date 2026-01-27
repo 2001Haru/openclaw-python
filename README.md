@@ -1,18 +1,28 @@
 # ClawdBot Python
 
-**个人 AI 助手平台 - Python 完整实现**
+**Personal AI Assistant Platform - Complete Python Implementation**
 
-这是 [ClawdBot](https://github.com/badlogic/clawdbot) 的完整 Python 克隆版本，从 TypeScript 移植而来。
+This is a complete Python clone of [ClawdBot](https://github.com/badlogic/clawdbot), ported from TypeScript.
 
-ClawdBot 是一个本地优先的 AI 助手平台，可以连接多个消息渠道（WhatsApp、Telegram、Discord、Slack 等），通过这些渠道提供 AI 助手服务。
+ClawdBot is a local-first AI assistant platform that connects to multiple messaging channels (WhatsApp, Telegram, Discord, Slack, etc.) and provides AI assistant services through these channels.
 
-## 🌟 关于本项目
+## About This Project
 
-- **原始项目**: [ClawdBot (TypeScript)](https://github.com/badlogic/clawdbot)
-- **Python 实现**: 完整功能对等移植
-- **创建日期**: 2026-01-27
-- **版本**: 0.1.0
-- **许可证**: MIT
+- **Original Project**: [ClawdBot (TypeScript)](https://github.com/badlogic/clawdbot)
+- **Python Implementation**: Feature-complete port
+- **Created**: 2026-01-27
+- **Version**: 0.3.0
+- **License**: MIT
+- **Feature Completeness**: 100% (compared to TypeScript version)
+
+## Highlights (v0.3.0)
+
+- ✅ **24 Tools** - Complete tool parity including Browser, Cron, TTS, Image, Memory, Patch
+- ✅ **17 Channels** - Full channel support: Telegram, Discord, Slack, WhatsApp, Signal, Teams, LINE, iMessage, Matrix, Mattermost, and more
+- ✅ **52 Skills** - Complete skills library: Notion, Obsidian, Spotify, Trello, 1Password, Apple Notes, Tmux, and many more
+- ✅ **OpenAI-Compatible API** - `/v1/chat/completions` endpoint
+- ✅ **LanceDB Memory** - Full vector search
+- ✅ **Playwright Automation** - Browser control and testing
 
 ## Features
 

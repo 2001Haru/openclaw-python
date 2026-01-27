@@ -78,12 +78,12 @@ class WebFetchTool(AgentTool):
 
 
 class WebSearchTool(AgentTool):
-    """Search the web (placeholder - requires search API)"""
+    """Search the web using DuckDuckGo"""
 
     def __init__(self):
         super().__init__()
         self.name = "web_search"
-        self.description = "Search the web for information"
+        self.description = "Search the web for information using DuckDuckGo"
 
     def get_schema(self) -> dict[str, Any]:
         return {
@@ -103,15 +103,50 @@ class WebSearchTool(AgentTool):
         }
 
     async def execute(self, params: dict[str, Any]) -> ToolResult:
-        """Search web"""
+        """Search web using DuckDuckGo"""
         query = params.get("query", "")
+        num_results = params.get("num_results", 5)
 
         if not query:
             return ToolResult(success=False, content="", error="No query provided")
 
-        # TODO: Integrate with actual search API (DuckDuckGo, Google, etc.)
-        return ToolResult(
-            success=False,
-            content="",
-            error="Web search not implemented - requires search API integration"
-        )
+        try:
+            from duckduckgo_search import DDGS
+            
+            # Perform search
+            results = []
+            with DDGS() as ddgs:
+                search_results = list(ddgs.text(query, max_results=num_results))
+            
+            # Format results
+            if search_results:
+                formatted = []
+                for i, result in enumerate(search_results, 1):
+                    formatted.append(
+                        f"{i}. **{result.get('title', 'No title')}**\n"
+                        f"   URL: {result.get('href', 'No URL')}\n"
+                        f"   {result.get('body', 'No description')}\n"
+                    )
+                
+                content = "\n".join(formatted)
+                return ToolResult(
+                    success=True,
+                    content=content,
+                    metadata={"count": len(search_results), "query": query}
+                )
+            else:
+                return ToolResult(
+                    success=True,
+                    content="No results found",
+                    metadata={"count": 0, "query": query}
+                )
+                
+        except ImportError:
+            return ToolResult(
+                success=False,
+                content="",
+                error="duckduckgo-search not installed. Install with: pip install duckduckgo-search"
+            )
+        except Exception as e:
+            logger.error(f"Web search error: {e}", exc_info=True)
+            return ToolResult(success=False, content="", error=str(e))

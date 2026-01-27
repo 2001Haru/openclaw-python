@@ -1,273 +1,189 @@
-# ClawdBot Python - 快速开始
+# Quick Start Guide
 
-这是 ClawdBot 的完整 Python 实现，从 TypeScript 版本移植而来。
+Get ClawdBot Python up and running in minutes.
 
-## 功能特性
+## Prerequisites
 
-✅ **已实现的核心功能**：
+- Python 3.11+
+- pip or Poetry
+- API keys (Anthropic or OpenAI)
 
-### 基础架构
-- ✅ Gateway WebSocket 服务器（端口 18789）
-- ✅ Pydantic 配置管理
-- ✅ Typer CLI 命令行工具
-- ✅ FastAPI Web UI
+## Installation
 
-### Agent 运行时
-- ✅ Anthropic Claude & OpenAI 集成
-- ✅ 会话管理（JSONL 持久化）
-- ✅ 流式响应
-- ✅ 工具调用框架
-
-### 工具系统（6个核心工具）
-- ✅ `read_file` - 读取文件
-- ✅ `write_file` - 写入文件
-- ✅ `edit_file` - 编辑文件
-- ✅ `bash` - 执行命令
-- ✅ `web_fetch` - 获取网页
-- ✅ `web_search` - 网页搜索（占位符）
-
-### 消息渠道（5个）
-- ✅ **Telegram** - 完整集成
-- ✅ **Discord** - Discord 机器人
-- ✅ **Slack** - Slack 机器人
-- ✅ **WhatsApp** - 占位符（需要库）
-- ✅ **WebChat** - 内置网页聊天
-
-### Skills 系统
-- ✅ Skills 加载器
-- ✅ 资格检查（OS、二进制、环境变量）
-- ✅ 多源加载
-- ✅ 4个示例 skills
-
-### 插件系统
-- ✅ 插件发现和加载
-- ✅ 插件 API
-- ✅ 5个扩展插件
-
-### Web UI
-- ✅ 控制面板
-- ✅ WebChat 界面
-- ✅ WebSocket 实时通信
-
-## 快速安装
-
-### 1. 安装依赖
+### Option 1: Poetry (Recommended)
 
 ```bash
 cd clawdbot-python
-
-# 使用 Poetry（推荐）
 poetry install
+```
 
-# 或使用 pip
+### Option 2: pip
+
+```bash
+cd clawdbot-python
 pip install -e .
 ```
 
-### 2. 配置
+### Optional Dependencies
+
+For full functionality:
 
 ```bash
-# 运行向导
-clawdbot onboard
+# Search and memory
+pip install duckduckgo-search sentence-transformers torch pyarrow lancedb
 
-# 或手动编辑配置
-nano ~/.clawdbot/clawdbot.json
+# Browser automation
+pip install playwright
+playwright install
+
+# Scheduler
+pip install apscheduler
+
+# Additional channels
+pip install line-bot-sdk mattermostdriver matrix-nio
+
+# Voice and media
+pip install elevenlabs twilio psutil pillow
 ```
 
-示例配置：
+## Configuration
+
+### 1. Run Onboarding
+
+```bash
+clawdbot onboard
+```
+
+This creates `~/.clawdbot/clawdbot.json` with default configuration.
+
+### 2. Set API Keys
+
+```bash
+export ANTHROPIC_API_KEY="your-anthropic-key"
+export OPENAI_API_KEY="your-openai-key"
+```
+
+### 3. Configure Channels (Optional)
+
+Edit `~/.clawdbot/clawdbot.json`:
+
 ```json
 {
-  "agent": {
-    "model": "anthropic/claude-opus-4-5-20250514"
-  },
-  "gateway": {
-    "port": 18789,
-    "bind": "loopback"
-  },
   "channels": {
     "telegram": {
       "enabled": true,
-      "botToken": "YOUR_BOT_TOKEN"
+      "botToken": "your-bot-token"
+    },
+    "discord": {
+      "enabled": true,
+      "botToken": "your-bot-token"
     }
   }
 }
 ```
 
-### 3. 设置环境变量
+## Usage
+
+### Start Gateway
 
 ```bash
-export ANTHROPIC_API_KEY="your-api-key"
-# 或
-export OPENAI_API_KEY="your-api-key"
-```
-
-### 4. 启动服务
-
-```bash
-# 启动 Gateway
 clawdbot gateway start
-
-# 或使用 Makefile
-make run
 ```
 
-### 5. 启动 Web UI（可选）
+The gateway listens on WebSocket port 18789.
+
+### Run Agent
 
 ```bash
-# 在另一个终端
-uvicorn clawdbot.web.app:app --reload --port 8080
+# Interactive mode
+clawdbot agent run
 
-# 或
-make run-web
+# Single turn
+clawdbot agent run "What's the weather today?"
 
-# 访问 http://localhost:8080
+# With specific model
+clawdbot agent run --model claude-opus-4 "Help me code"
 ```
 
-## 使用示例
-
-### CLI 命令
+### Channel Management
 
 ```bash
-# 运行 agent
-clawdbot agent run "写一个 Python 函数计算斐波那契数列"
-
-# 列出会话
-clawdbot sessions list
-
-# 管理渠道
+# List channels
 clawdbot channels list
-clawdbot channels login telegram
 
-# 系统诊断
+# Login to channel
+clawdbot channels login telegram
+clawdbot channels login discord
+```
+
+### Web UI
+
+```bash
+# Start web server
+uvicorn clawdbot.web.app:app --reload --port 8080
+```
+
+Then visit http://localhost:8080
+
+## Testing
+
+```bash
+# Run tests
+pytest
+
+# Check status
+clawdbot status
+
+# Run doctor
 clawdbot doctor
 ```
 
-### Telegram 集成
-
-1. 从 @BotFather 获取 bot token
-2. 配置：
-```json
-{
-  "channels": {
-    "telegram": {
-      "enabled": true,
-      "botToken": "YOUR_TOKEN"
-    }
-  }
-}
-```
-3. 启动 Gateway
-4. 在 Telegram 给机器人发消息
-
-### Discord 集成
-
-1. 在 Discord Developer Portal 创建应用
-2. 获取 bot token
-3. 配置并启动
-
-### WebChat
-
-1. 启动 Web UI：`uvicorn clawdbot.web.app:app --port 8080`
-2. 访问：http://localhost:8080/webchat
-3. 直接在浏览器聊天
-
-## 项目结构
-
-```
-clawdbot-python/
-├── clawdbot/              # 主包
-│   ├── agents/            # Agent 运行时
-│   │   ├── runtime.py     # LLM 集成
-│   │   ├── session.py     # 会话管理
-│   │   └── tools/         # 工具实现
-│   ├── channels/          # 消息渠道
-│   │   ├── telegram.py
-│   │   ├── discord.py
-│   │   └── ...
-│   ├── cli/               # CLI 命令
-│   ├── config/            # 配置管理
-│   ├── gateway/           # WebSocket 服务器
-│   ├── plugins/           # 插件系统
-│   ├── skills/            # Skills 加载器
-│   └── web/               # Web UI
-├── extensions/            # 渠道扩展
-├── skills/                # 捆绑的 skills
-├── tests/                 # 测试套件
-└── ui/                    # Web UI 前端
-```
-
-## 开发
+## Common Commands
 
 ```bash
-# 安装开发依赖
-make dev
+# Status check
+clawdbot status
 
-# 运行测试
-make test
+# Health check
+clawdbot doctor
 
-# 代码格式化
-make format
+# List sessions
+clawdbot agent sessions
 
-# Linting
-make lint
-
-# 运行诊断
-make doctor
+# Clear sessions
+rm -rf ~/.clawdbot/sessions/*
 ```
 
-## 测试
+## Next Steps
 
-```bash
-# 运行所有测试
-pytest tests/ -v
+1. Read [CONTRIBUTING.md](CONTRIBUTING.md) for development
+2. Check [skills/](skills/) for available skills
+3. Explore [extensions/](extensions/) for plugins
+4. See [FEATURES_COMPLETE.md](FEATURES_COMPLETE.md) for full feature list
 
-# 带覆盖率
-pytest tests/ -v --cov=clawdbot --cov-report=html
+## Troubleshooting
 
-# 或使用 Makefile
-make test
-make test-cov
-```
+### Gateway won't start
+- Check port 18789 is available
+- Verify config file exists: `~/.clawdbot/clawdbot.json`
 
-## 与 TypeScript 版本对比
+### API errors
+- Verify API keys are set
+- Check API key validity
+- Check internet connection
 
-| 组件 | TypeScript | Python |
-|------|-----------|--------|
-| Gateway | ✅ ws | ✅ websockets |
-| HTTP | ✅ Express/Hono | ✅ FastAPI |
-| 配置 | ✅ Zod | ✅ Pydantic |
-| CLI | ✅ Commander | ✅ Typer |
-| Agent | ✅ pi-agent-core | ✅ Anthropic/OpenAI SDK |
-| 会话 | ✅ JSONL | ✅ JSONL |
-| Telegram | ✅ grammY | ✅ python-telegram-bot |
-| Discord | ✅ discord.js | ✅ discord.py |
-| Skills | ✅ 58+ | ✅ 4（示例）|
-| Web UI | ✅ Lit | ✅ Jinja2 + Alpine.js |
+### Channel errors
+- Verify bot tokens
+- Check channel-specific requirements
+- See channel documentation in `clawdbot/channels/`
 
-## 注意事项
+## Support
 
-⚠️ **WhatsApp 集成**需要额外的库（whatsapp-web.py 或类似）
+For issues or questions, check:
+- GitHub Issues
+- Documentation in `docs/`
+- Original ClawdBot project
 
-⚠️ **Web Search** 需要搜索 API（DuckDuckGo、Google 等）
+## License
 
-⚠️ **LanceDB Memory** 是占位符，需要完整实现
-
-⚠️ **Skills** 只包含4个示例，TypeScript 版本有 58+
-
-## 下一步
-
-1. ✅ 添加更多 skills
-2. ✅ 实现完整的 WhatsApp 支持
-3. ✅ 完善 memory 系统
-4. ✅ 添加浏览器自动化工具
-5. ✅ 实现 cron jobs
-6. ✅ 添加 Canvas/A2UI 工具
-
-## 获取帮助
-
-- 文档：查看 README.md 和 CONTRIBUTING.md
-- 问题：运行 `clawdbot doctor` 进行诊断
-- 示例：查看 `skills/` 目录的示例 skills
-
-## 许可证
-
-MIT License - 详见 LICENSE 文件
+MIT License

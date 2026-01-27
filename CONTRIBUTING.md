@@ -1,102 +1,178 @@
 # Contributing to ClawdBot Python
 
-Thank you for your interest in contributing to ClawdBot!
+Thank you for your interest in contributing to ClawdBot Python!
 
 ## Development Setup
 
-1. **Clone the repository**
+### Prerequisites
+
+- Python 3.11+
+- Poetry or pip
+- Git
+
+### Setup
+
 ```bash
+# Clone repository
 git clone https://github.com/yourusername/clawdbot-python.git
 cd clawdbot-python
-```
 
-2. **Install dependencies**
-```bash
-make dev
-# or
+# Install dependencies
 poetry install --with dev
+
+# Or with pip
+pip install -e ".[dev]"
 ```
 
-3. **Run tests**
+## Development Workflow
+
+### 1. Create a Branch
+
 ```bash
-make test
+git checkout -b feature/your-feature-name
 ```
 
-## Code Style
+### 2. Make Changes
 
-We use:
-- **Black** for code formatting
-- **Ruff** for linting
-- **MyPy** for type checking
+Follow the project structure:
+- Tools: `clawdbot/agents/tools/`
+- Channels: `clawdbot/channels/`
+- Skills: `skills/`
+- Extensions: `extensions/`
 
-Format your code before committing:
+### 3. Code Style
+
 ```bash
-make format
-make lint
+# Format code
+black clawdbot/
+isort clawdbot/
+
+# Lint
+ruff check clawdbot/
+mypy clawdbot/
 ```
 
-## Testing
+### 4. Add Tests
 
-Write tests for new features:
 ```bash
-# Run all tests
-make test
-
-# Run with coverage
-make test-cov
+# Add tests to tests/
+# Run tests
+pytest
 ```
 
-Tests are located in `tests/` directory.
+### 5. Update Documentation
+
+- Update relevant README sections
+- Add docstrings
+- Update CHANGELOG.md
+
+### 6. Submit PR
+
+```bash
+git add .
+git commit -m "Add feature: your feature"
+git push origin feature/your-feature-name
+```
+
+## Contributing Guidelines
+
+### Code Quality
+
+- Use type hints
+- Add docstrings
+- Handle errors gracefully
+- Log appropriately
+
+### Testing
+
+- Add unit tests for new features
+- Ensure existing tests pass
+- Test edge cases
+
+### Documentation
+
+- Update README for user-facing changes
+- Add inline comments for complex code
+- Update CHANGELOG.md
+
+## Adding New Components
+
+### Adding a Tool
+
+1. Create file in `clawdbot/agents/tools/`
+2. Inherit from `AgentTool`
+3. Implement `get_schema()` and `execute()`
+4. Register in `registry.py`
+5. Add tests
+
+Example:
+
+```python
+from .base import AgentTool, ToolResult
+
+class MyTool(AgentTool):
+    def __init__(self):
+        super().__init__()
+        self.name = "my_tool"
+        self.description = "Tool description"
+    
+    def get_schema(self) -> dict:
+        return {
+            "type": "object",
+            "properties": {
+                "param": {"type": "string"}
+            }
+        }
+    
+    async def execute(self, params: dict) -> ToolResult:
+        # Implementation
+        return ToolResult(success=True, content="Result")
+```
+
+### Adding a Channel
+
+1. Create file in `clawdbot/channels/`
+2. Inherit from `ChannelPlugin`
+3. Implement required methods
+4. Create extension in `extensions/`
+5. Add configuration schema
+
+### Adding a Skill
+
+1. Create directory in `skills/`
+2. Create `SKILL.md` with frontmatter
+3. Document usage and tools
+4. Add examples
 
 ## Project Structure
 
 ```
-clawdbot/
-├── agents/          # Agent runtime and tools
-├── channels/        # Messaging channel implementations
-├── cli/             # Command-line interface
-├── config/          # Configuration management
-├── gateway/         # WebSocket gateway server
-├── plugins/         # Plugin system
-├── skills/          # Skills loader
-└── web/             # Web UI
+clawdbot-python/
+├── clawdbot/          # Core package
+│   ├── agents/        # Agent runtime and tools
+│   ├── channels/      # Channel plugins
+│   ├── cli/           # CLI commands
+│   ├── config/        # Configuration
+│   ├── gateway/       # Gateway server
+│   ├── plugins/       # Plugin system
+│   ├── skills/        # Skills loader
+│   └── web/           # Web UI
+├── extensions/        # Extension plugins
+├── skills/            # Skill definitions
+├── tests/             # Test files
+└── docs/              # Documentation
 ```
 
-## Adding a New Channel
+## Getting Help
 
-1. Create channel class in `clawdbot/channels/`
-2. Implement `ChannelPlugin` interface
-3. Create extension in `extensions/` with `plugin.json`
-4. Add tests in `tests/`
+- GitHub Issues: Report bugs and request features
+- GitHub Discussions: Ask questions
+- Documentation: Check docs/ folder
 
-## Adding a New Tool
+## Code of Conduct
 
-1. Create tool class in `clawdbot/agents/tools/`
-2. Inherit from `AgentTool` base class
-3. Register in `registry.py`
-4. Add tests
+Be respectful, inclusive, and constructive.
 
-## Adding a New Skill
+## License
 
-1. Create directory in `skills/`
-2. Add `SKILL.md` with frontmatter
-3. Document tool usage and examples
-
-## Pull Request Process
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## Code Review
-
-- Code must pass all tests
-- Code must pass linting
-- Add tests for new features
-- Update documentation as needed
-
-## Questions?
-
-Open an issue or discussion on GitHub.
+By contributing, you agree that your contributions will be licensed under the MIT License.
