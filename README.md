@@ -79,6 +79,15 @@ uv run python examples/04_api_server.py
 
 ## What's New
 
+### Latest: Multi-Provider Support (v0.4.1)
+
+- **🚀 5 LLM Providers**: Anthropic, OpenAI, Google Gemini, AWS Bedrock, Ollama
+- **🆓 Free Options**: Ollama (local), Gemini (free tier)
+- **🔒 Privacy**: Run fully local with Ollama
+- **⚡ Speed**: Gemini Flash, Claude Haiku
+- **🏢 Enterprise**: AWS Bedrock support
+- **📦 50+ Models**: Access to massive model ecosystem
+
 ### Recent Improvements (v0.4.0)
 
 - **Package Management**: Migrated from Poetry to `uv` for faster, more reliable builds
