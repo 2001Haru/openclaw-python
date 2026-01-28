@@ -170,7 +170,7 @@ class AgentTool(ABC):
     async def _execute_impl(self, params: dict[str, Any]) -> ToolResult:
         """
         Internal execution implementation
-        
+
         Override this method in subclasses if you want to use the built-in
         timeout/permission/rate-limit features. Otherwise, override execute() directly.
         """
@@ -186,7 +186,7 @@ class AgentTool(ABC):
         - Timeout control
         - Metrics collection
         - Output size limiting
-        
+
         Subclasses can either:
         1. Override this method directly (for custom behavior)
         2. Override _execute_impl (to use built-in features)
@@ -199,9 +199,7 @@ class AgentTool(ABC):
             if type(self).execute != AgentTool.execute:
                 # Subclass has custom execute, this shouldn't happen
                 # but if it does, just call the implementation
-                raise NotImplementedError(
-                    "If overriding execute(), don't call super().execute()"
-                )
+                raise NotImplementedError("If overriding execute(), don't call super().execute()")
 
             # Check permissions
             self._check_permissions()
