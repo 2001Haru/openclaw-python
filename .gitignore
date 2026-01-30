@@ -48,6 +48,11 @@ Thumbs.db
 docker-compose.override.yml
 demo-config/
 
+# Test files (keep local only)
+test_*.py
+list_*.py
+.sessions/
+
 # Testing
 .pytest_cache/
 .coverage
