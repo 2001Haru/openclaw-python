@@ -113,38 +113,39 @@ CLAWDBOT_LOG_LEVEL=INFO       # 日志级别
 
 ---
 
-## ⭐ 推荐方式：通过 Telegram Bot 使用（最实用）
+## ⭐ 最实用方式：启动 Telegram Bot（推荐）
 
-**这是最方便的使用方式！** 在手机或电脑上通过 Telegram 直接与 AI 对话。
+在手机或电脑上通过 Telegram 随时与 AI 对话，这是**最方便的日常使用方式**。
 
-### 前提条件
-确保已配置：
-- ✅ 至少一个 LLM API Key（步骤二）
-- ✅ Telegram Bot Token（步骤二中的 Telegram 配置）
-
-### 启动 Telegram Bot 服务
+### 🚀 启动命令
 
 ```bash
-# 🚀 启动 Telegram Bot（推荐）
-uv run python tests/manual/test_telegram_restricted.py
-
-# 看到以下输出表示启动成功：
-# ✅ Telegram Bot 启动成功！
-# Bot 用户名: @你的bot用户名
-# 现在可以在 Telegram 中搜索并开始对话了
+# 启动 Telegram Bot 服务（完整版）
+uv run python examples/05_telegram_bot.py
 ```
 
-**⚠️ 重要：这是一个持续运行的服务**
-- 启动后会一直运行，等待 Telegram 消息
-- 需要保持终端窗口打开
-- 按 `Ctrl+C` 可以停止服务
+**启动后会看到：**
+```
+🤖 ClawdBot Telegram Bot Example
+==================================================
+🚀 Starting Telegram bot...
+📱 Send a message to your bot on Telegram
 
-### 在 Telegram 中使用
+Press Ctrl+C to stop
 
-1. 打开 Telegram（手机或电脑）
-2. 搜索你的 bot 用户名（例如：`@myopenclaw_bot`）
-3. 点击 **Start** 开始对话
-4. 直接发送消息，AI 会回复你！
+==================================================
+
+✅ Bot started!
+   Connected: True
+   Healthy: True
+```
+
+### 📱 使用方式
+
+1. **打开 Telegram**（手机或电脑）
+2. **搜索你的 bot**（例如：`@myopenclaw_bot`）
+3. **点击 Start** 开始对话
+4. **直接发消息**，AI 会自动回复！
 
 **示例对话：**
 ```
@@ -152,65 +153,113 @@ uv run python tests/manual/test_telegram_restricted.py
 Bot: 当然可以！你需要什么样的函数？
 
 你: 一个计算斐波那契数列的函数
-Bot: [AI 生成代码并回复]
+Bot: [AI 生成完整代码]
 
-你: 谢谢！
-Bot: 不客气！还有其他问题吗？
+你: 如何使用这个函数？
+Bot: [提供使用示例]
 ```
+
+### ⚠️ 重要说明
+
+- **这是持续运行的服务** - 启动后会一直运行
+- **需要保持终端窗口打开** - 关闭终端则服务停止
+- **按 `Ctrl+C` 停止服务**
+- **支持多轮对话** - AI 会记住对话历史
+- **自动重连** - 网络中断后会自动恢复
 
 ---
 
-## 其他使用方式
+## 🔧 其他启动方式
 
-### 方式 1️⃣：命令行单次对话（快速测试）
+### 方式 1️⃣：HTTP API 服务器（应用集成）
 
-```bash
-# 单次对话（不是服务，命令执行完就结束）
-uv run openclaw agent chat "你好，请介绍一下自己"
-
-# 指定模型
-uv run openclaw agent chat "帮我写个 Python 函数" --model anthropic/claude-opus-4-5
-```
-
-**特点：**
-- ❌ 不是服务，执行完就结束
-- ✅ 适合快速测试
-- ❌ 不支持多轮对话
-
-### 方式 2️⃣：交互式终端模式（在终端对话）
+如果你要把 OpenClaw 集成到其他应用，启动 HTTP API 服务：
 
 ```bash
-# 启动交互式对话（持续运行，直到输入 /quit）
-uv run openclaw agent interactive
-
-# 然后你可以：
-# - 多轮对话
-# - 输入 /help 查看命令
-# - 输入 /quit 退出
-```
-
-**特点：**
-- ❌ 不是网络服务，只是终端界面
-- ✅ 支持多轮对话
-- ✅ 适合在服务器上使用
-
-### 方式 3️⃣：HTTP API 服务器（应用集成）⭐
-
-```bash
-# 🚀 启动 HTTP API 服务（真正的网络服务）
+# 启动 API 服务器
 uv run openclaw api start
 
 # 服务启动后：
-# - API 文档: http://localhost:18789/docs
-# - Health check: http://localhost:18789/health
-# - 支持 OpenAI 兼容接口
+# 📚 API 文档: http://localhost:18789/docs
+# 💚 健康检查: http://localhost:18789/health
+# 🔌 OpenAI 兼容接口: http://localhost:18789/v1/chat/completions
 ```
 
-**特点：**
-- ✅ 真正的网络服务，持续运行
-- ✅ 其他程序可以通过 HTTP 调用
-- ✅ 适合集成到应用中
-- ⚠️ 需要保持终端运行，按 `Ctrl+C` 停止
+**使用场景：**
+- ✅ 从其他程序调用（Python、JavaScript、等）
+- ✅ 集成到 Web 应用
+- ✅ 作为微服务部署
+
+**示例：用 curl 调用**
+```bash
+curl http://localhost:18789/v1/chat/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [{"role": "user", "content": "Hello!"}],
+    "model": "anthropic/claude-opus-4-5"
+  }'
+```
+
+### 方式 2️⃣：交互式终端（服务器使用）
+
+如果你在服务器终端工作，可以用交互模式：
+
+```bash
+# 启动交互式对话
+uv run openclaw agent interactive
+
+# 支持：
+# - 多轮对话
+# - /help 查看命令
+# - /quit 退出
+```
+
+**使用场景：**
+- ✅ SSH 连接到服务器时使用
+- ✅ 需要在终端中快速问问题
+- ✅ 开发调试
+
+### 方式 3️⃣：命令行单次对话（快速测试）
+
+快速测试某个问题：
+
+```bash
+# 单次对话（执行完就结束）
+uv run openclaw agent chat "你好，请介绍一下自己"
+
+# 指定模型
+uv run openclaw agent chat "帮我写个函数" --model anthropic/claude-opus-4-5
+
+# 使用 Ollama 本地模型
+uv run openclaw agent chat "Hello" --model ollama/llama3.2
+```
+
+**使用场景：**
+- ✅ 快速测试配置
+- ✅ 脚本自动化
+- ❌ 不适合日常对话（不支持多轮）
+
+### 方式 4️⃣：更多 Channel（Discord、Slack、等）
+
+OpenClaw 支持多种通讯平台：
+
+```bash
+# 查看所有示例
+ls examples/
+
+# Telegram Bot (推荐)
+uv run python examples/05_telegram_bot.py
+
+# Discord Bot
+# 1. 配置 DISCORD_BOT_TOKEN
+# 2. 修改 examples/05_telegram_bot.py 使用 DiscordChannel
+
+# Slack Bot  
+# 1. 配置 SLACK_BOT_TOKEN
+# 2. 修改示例使用 SlackChannel
+
+# 更多 channels 支持中...
+```
 
 ### 📱 如何创建 Telegram Bot（首次使用）
 
