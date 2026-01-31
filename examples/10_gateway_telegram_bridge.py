@@ -1,17 +1,51 @@
 """
-Example 10: Gateway + Telegram Bridge
+Example 10: Gateway + Telegram Bridge (Full Architecture)
 
-This example demonstrates how to connect Telegram Bot to Gateway Server,
-similar to the TypeScript OpenClaw architecture.
+This example demonstrates the complete OpenClaw architecture matching
+the TypeScript implementation:
 
 Architecture:
-    Telegram User → Telegram Bot API
-                         ↓
-                    Telegram Monitor (in same process)
-                         ↓
-                    Gateway Server (WebSocket)
-                         ↓
-                    Agent Runtime
+    ┌──────────────────────────────────────────────────────┐
+    │            Gateway Server                            │
+    │                                                      │
+    │  ┌────────────────────────────────────────────────┐ │
+    │  │         ChannelManager                         │ │
+    │  │  (manages channel plugins)                     │ │
+    │  │                                                │ │
+    │  │  ┌──────────────┐  ┌──────────────┐          │ │
+    │  │  │  Telegram    │  │   Discord    │  ...     │ │
+    │  │  │  (Plugin)    │  │   (Plugin)   │          │ │
+    │  │  └──────┬───────┘  └──────────────┘          │ │
+    │  │         │                                      │ │
+    │  │         │ HTTP Polling                         │ │
+    │  │         ↓                                      │ │
+    │  │    Telegram API                                │ │
+    │  └────────────────────────────────────────────────┘ │
+    │                                                      │
+    │  ┌────────────────────────────────────────────────┐ │
+    │  │      WebSocket Server (ws://localhost:8765)   │ │
+    │  │      (for external clients: UI, CLI, mobile)  │ │
+    │  └────────────────────────────────────────────────┘ │
+    │                                                      │
+    │  ┌────────────────────────────────────────────────┐ │
+    │  │      Event Broadcasting (Observer Pattern)    │ │
+    │  │      (receives events from Agent Runtime)     │ │
+    │  └────────────────────────────────────────────────┘ │
+    │                        ↑                             │
+    │                        │ events                      │
+    │  ┌─────────────────────┴──────────────────────────┐ │
+    │  │              Agent Runtime                     │ │
+    │  │  • Process messages                           │ │
+    │  │  • Call LLM APIs                              │ │
+    │  │  • Emit events (observed by Gateway)          │ │
+    │  └────────────────────────────────────────────────┘ │
+    └──────────────────────────────────────────────────────┘
+
+Key Points:
+- Channels are INSIDE Gateway (managed by ChannelManager)
+- Channels call Agent Runtime via function calls (not HTTP/WebSocket)
+- Gateway observes Agent Runtime events (Observer Pattern)
+- WebSocket is for EXTERNAL clients only (UI, CLI, mobile)
 
 Prerequisites:
 1. Set TELEGRAM_BOT_TOKEN environment variable
@@ -29,176 +63,195 @@ import asyncio
 import logging
 import os
 from pathlib import Path
-from typing import Any
 
 from openclaw.agents.runtime import AgentRuntime
 from openclaw.agents.session import SessionManager
-from openclaw.agents.tools.registry import ToolRegistry
-from openclaw.channels.base import InboundMessage
 from openclaw.channels.enhanced_telegram import EnhancedTelegramChannel
-from openclaw.channels.registry import ChannelRegistry
 from openclaw.config import ClawdbotConfig
-from openclaw.gateway.server import GatewayServer
+from openclaw.gateway import GatewayServer, ChannelManager
 from openclaw.monitoring import setup_logging
 
 logger = logging.getLogger(__name__)
 
 
-class IntegratedOpenClawServer:
+class OpenClawServer:
     """
-    Integrated OpenClaw Server that runs:
-    - Gateway Server (WebSocket)
-    - Telegram Bot (as a channel plugin)
-    - Agent Runtime
+    Complete OpenClaw Server implementation
     
-    This mirrors the TypeScript OpenClaw architecture where
-    channels and gateway run in the same process.
+    This matches the TypeScript OpenClaw architecture:
+    - Gateway Server contains ChannelManager
+    - ChannelManager manages all channel plugins
+    - Channels call Agent Runtime directly (function calls)
+    - Gateway observes Agent Runtime for event broadcasting
+    
+    Features:
+    - ✅ ChannelManager with lifecycle management
+    - ✅ Multiple channel support (Telegram, Discord, etc.)
+    - ✅ Per-channel configuration (RuntimeEnv)
+    - ✅ Observer Pattern for event broadcasting
+    - ✅ WebSocket API for external clients
     """
     
     def __init__(self, config: ClawdbotConfig):
         self.config = config
         self.running = False
         
-        # Core components
+        # =====================================================================
+        # 1. Core Components
+        # =====================================================================
+        
+        # Workspace for session storage
         workspace = Path("./workspace")
         workspace.mkdir(exist_ok=True)
         
+        # Session Manager
         self.session_manager = SessionManager(workspace)
-        self.tool_registry = ToolRegistry()
+        
+        # Agent Runtime (shared by all channels)
         self.agent_runtime = AgentRuntime(
-            model="anthropic/claude-opus-4",
+            model=config.agent.get("model", "anthropic/claude-sonnet-4-20250514"),
             enable_context_management=True,
             max_retries=3
         )
         
-        # Channel registry
-        self.channel_registry = ChannelRegistry()
+        # =====================================================================
+        # 2. Gateway Server (contains ChannelManager)
+        # =====================================================================
         
-        # Gateway server (register as observer of agent_runtime)
-        self.gateway_server = GatewayServer(config, self.agent_runtime)
+        self.gateway = GatewayServer(
+            config=config,
+            agent_runtime=self.agent_runtime,
+            session_manager=self.session_manager,
+            auto_discover_channels=False,  # We'll register manually
+        )
         
-        # Telegram channel (optional)
-        self.telegram_channel: EnhancedTelegramChannel | None = None
+        # Access ChannelManager via Gateway
+        self.channel_manager: ChannelManager = self.gateway.channel_manager
         
-    async def setup_telegram(self, bot_token: str) -> None:
-        """Setup Telegram channel as a server-side plugin"""
-        logger.info("Setting up Telegram channel plugin...")
+        logger.info("OpenClawServer initialized")
+    
+    def setup_channels(self) -> None:
+        """
+        Register and configure channel plugins
         
-        self.telegram_channel = EnhancedTelegramChannel()
+        This is where you register all your channels with ChannelManager.
+        Channels are plugins managed by Gateway.
+        """
+        # =====================================================================
+        # Register Telegram Channel
+        # =====================================================================
         
-        # Set message handler that processes through agent
-        async def handle_telegram_message(message: InboundMessage):
-            """Handle Telegram message through agent runtime"""
-            logger.info(f"📨 Telegram message from {message.sender_name}: {message.text}")
-            
-            # Get session for this chat
-            session_id = f"telegram-{message.chat_id}"
-            session = self.session_manager.get_session(session_id)
-            
-            try:
-                # Process through agent
-                response_text = ""
-                async for event in self.agent_runtime.run_turn(session, message.text):
-                    if event.type == "assistant":
-                        delta = event.data.get("delta", {})
-                        if "text" in delta:
-                            response_text += delta["text"]
-                
-                # Send response back to Telegram
-                if response_text:
-                    await self.telegram_channel.send_text(
-                        message.chat_id,
-                        response_text,
-                        reply_to=message.message_id
-                    )
-                    logger.info(f"✅ Sent response to Telegram ({len(response_text)} chars)")
-                    
-                    # ✅ No need to call gateway.broadcast_event()
-                    # Gateway automatically receives events via observer pattern
-                    
-            except Exception as e:
-                logger.error(f"❌ Error processing Telegram message: {e}", exc_info=True)
-                if self.telegram_channel:
-                    await self.telegram_channel.send_text(
-                        message.chat_id,
-                        f"Sorry, I encountered an error: {e}",
-                        reply_to=message.message_id
-                    )
-        
-        self.telegram_channel.set_message_handler(handle_telegram_message)
-        
-        # Register channel
-        self.channel_registry.register(self.telegram_channel)
-        
-        # Start Telegram bot
-        await self.telegram_channel.start({"bot_token": bot_token})
-        logger.info("✅ Telegram channel plugin registered and started")
-        
-    async def start(self) -> None:
-        """Start the integrated server"""
-        logger.info("🚀 Starting OpenClaw Integrated Server...")
-        
-        # Setup Telegram if token available
         bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
         if bot_token:
-            await self.setup_telegram(bot_token)
+            # Register channel class with ChannelManager
+            self.channel_manager.register(
+                channel_id="telegram",
+                channel_class=EnhancedTelegramChannel,
+                config={
+                    "bot_token": bot_token,
+                    "parse_mode": "Markdown",
+                },
+            )
+            logger.info("✅ Telegram channel registered")
         else:
-            logger.warning("⚠️  TELEGRAM_BOT_TOKEN not set, Telegram channel disabled")
+            logger.warning("⚠️ TELEGRAM_BOT_TOKEN not set, Telegram disabled")
         
-        # Start Gateway server
-        logger.info("🌐 Starting Gateway server...")
-        gateway_task = asyncio.create_task(self.gateway_server.start())
+        # =====================================================================
+        # Register Discord Channel (example, disabled by default)
+        # =====================================================================
+        
+        discord_token = os.getenv("DISCORD_BOT_TOKEN")
+        if discord_token:
+            from openclaw.channels.enhanced_discord import EnhancedDiscordChannel
+            self.channel_manager.register(
+                channel_id="discord",
+                channel_class=EnhancedDiscordChannel,
+                config={
+                    "bot_token": discord_token,
+                },
+            )
+            logger.info("✅ Discord channel registered")
+        
+        # =====================================================================
+        # You can also set custom runtime per channel
+        # =====================================================================
+        
+        # Example: Use different model for a specific channel
+        # custom_runtime = AgentRuntime(model="anthropic/claude-haiku")
+        # self.channel_manager.set_runtime("telegram", custom_runtime)
+        
+        logger.info(f"Registered {len(self.channel_manager.list_channels())} channels")
+    
+    async def start(self) -> None:
+        """
+        Start the OpenClaw server
+        
+        This starts:
+        1. Gateway WebSocket server
+        2. All enabled channel plugins via ChannelManager
+        """
+        logger.info("🚀 Starting OpenClaw Server...")
+        
+        # Setup channels
+        self.setup_channels()
         
         self.running = True
-        logger.info("✅ Server started successfully!")
-        logger.info("")
-        logger.info("=" * 60)
-        logger.info("📡 Gateway WebSocket: ws://localhost:8765")
-        if self.telegram_channel:
-            logger.info("📱 Telegram Bot: Send messages to your bot")
-        logger.info("=" * 60)
-        logger.info("")
         
-        # Wait for server to complete
-        await gateway_task
+        # Print status
+        print()
+        print("=" * 60)
+        print("🦞 OpenClaw Python Server")
+        print("=" * 60)
+        print()
+        print("Architecture:")
+        print("  ┌─────────────────────────────────────────┐")
+        print("  │           Gateway Server                │")
+        print("  │                                         │")
+        print("  │  ChannelManager                        │")
+        for ch_id in self.channel_manager.list_channels():
+            print(f"  │    └─ {ch_id.capitalize()} Channel (plugin)       │")
+        print("  │                                         │")
+        print("  │  WebSocket: ws://localhost:8765        │")
+        print("  │                                         │")
+        print("  │  Event Broadcasting (Observer Pattern) │")
+        print("  │           ↑                             │")
+        print("  │  ┌────────┴─────────────────────────┐  │")
+        print("  │  │     Agent Runtime                │  │")
+        print("  │  └──────────────────────────────────┘  │")
+        print("  └─────────────────────────────────────────┘")
+        print()
+        print("=" * 60)
+        print()
         
+        # Start Gateway (this also starts all channels via ChannelManager)
+        await self.gateway.start(start_channels=True)
+    
     async def stop(self) -> None:
-        """Stop the integrated server"""
-        logger.info("⏹️  Stopping server...")
+        """Stop the OpenClaw server"""
+        logger.info("⏹️ Stopping OpenClaw Server...")
         
-        # Stop Telegram channel
-        if self.telegram_channel:
-            await self.telegram_channel.stop()
-            logger.info("✅ Telegram channel stopped")
-        
-        # Stop Gateway server
-        await self.gateway_server.stop()
-        logger.info("✅ Gateway server stopped")
+        # Gateway.stop() also stops all channels via ChannelManager
+        await self.gateway.stop()
         
         self.running = False
+        logger.info("✅ Server stopped")
 
 
 async def main():
-    """Run integrated OpenClaw server"""
+    """Run OpenClaw server with full architecture"""
     
     # Setup logging
     setup_logging(level="INFO", format_type="colored")
     
-    print("🦞 OpenClaw Python - Integrated Server")
+    print()
+    print("🦞 OpenClaw Python - Full Architecture Demo")
     print("=" * 60)
     print()
-    print("Architecture:")
-    print("  Telegram User → Telegram Bot (plugin)")
-    print("                       ↓")
-    print("                  Gateway Server")
-    print("                       ↓")
-    print("                  Agent Runtime")
-    print()
-    print("=" * 60)
+    print("This example demonstrates the complete TypeScript-matching")
+    print("architecture with ChannelManager inside Gateway.")
     print()
     
     # Check requirements
-    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     has_llm_key = any([
         os.getenv("ANTHROPIC_API_KEY"),
         os.getenv("OPENAI_API_KEY"),
@@ -210,8 +263,9 @@ async def main():
         print("   Set one of: ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY")
         return
     
+    bot_token = os.getenv("TELEGRAM_BOT_TOKEN")
     if not bot_token:
-        print("⚠️  Warning: TELEGRAM_BOT_TOKEN not set")
+        print("⚠️ Warning: TELEGRAM_BOT_TOKEN not set")
         print("   Gateway will start but Telegram channel will be disabled")
         print()
     
@@ -222,20 +276,19 @@ async def main():
             "bind": "loopback",
         },
         agent={
-            "model": "anthropic/claude-opus-4",
-            "max_tokens": 2000,
+            "model": "anthropic/claude-sonnet-4-20250514",
+            "max_tokens": 4000,
         }
     )
     
     # Create and start server
-    server = IntegratedOpenClawServer(config)
+    server = OpenClawServer(config)
     
     try:
         await server.start()
     except KeyboardInterrupt:
         print("\n")
         await server.stop()
-        print("✅ Server stopped")
 
 
 if __name__ == "__main__":
