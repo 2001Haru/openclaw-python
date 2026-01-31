@@ -47,78 +47,107 @@ See [docs/RELEASE_NOTES_v0.6.0.md](docs/RELEASE_NOTES_v0.6.0.md) for full detail
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Python 3.11+
-- [uv](https://docs.astral.sh/uv/) package manager
-- **At least ONE** API key (choose any):
-  - Anthropic Claude (recommended)
-  - OpenAI GPT
-  - Google Gemini
-  - Or use Ollama (local, free)
-
-### Installation
+### Step 1: 安装依赖
 
 ```bash
-# Clone repository
+# 1. 克隆项目
 git clone https://github.com/zhaoyuong/openclaw-python.git
 cd openclaw-python
 
-# Install uv (if needed)
+# 2. 安装 uv 包管理器（如果还没安装）
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
-# Install dependencies
+# 3. 安装项目依赖
 uv sync
-
-# Configure (choose ONE provider)
-cp .env.example .env
-# Edit .env and add at least one:
-# ANTHROPIC_API_KEY=your-key  (Claude - recommended)
-# OPENAI_API_KEY=your-key     (GPT)
-# GOOGLE_API_KEY=your-key     (Gemini)
-# Or use Ollama (no key needed)
 ```
 
-### Start Using
+### Step 2: 配置 API Key
+
+**选择一个 LLM Provider**（至少选一个）：
+
+<details>
+<summary><strong>🔹 选项 1: Claude（推荐）</strong></summary>
+
+1. 访问 https://console.anthropic.com/
+2. 注册账号并创建 API Key
+3. 编辑 `.env` 文件：
+   ```bash
+   cp .env.example .env
+   echo 'ANTHROPIC_API_KEY=sk-ant-your-key-here' >> .env
+   ```
+</details>
+
+<details>
+<summary><strong>🔹 选项 2: OpenAI GPT</strong></summary>
+
+1. 访问 https://platform.openai.com/api-keys
+2. 创建 API Key
+3. 编辑 `.env` 文件：
+   ```bash
+   cp .env.example .env
+   echo 'OPENAI_API_KEY=sk-your-key-here' >> .env
+   ```
+</details>
+
+<details>
+<summary><strong>🔹 选项 3: Google Gemini</strong></summary>
+
+1. 访问 https://aistudio.google.com/apikey
+2. 创建 API Key
+3. 编辑 `.env` 文件：
+   ```bash
+   cp .env.example .env
+   echo 'GOOGLE_API_KEY=your-key-here' >> .env
+   ```
+</details>
+
+<details>
+<summary><strong>🔹 选项 4: Ollama（本地免费，无需 API Key）</strong></summary>
+
+1. 安装 Ollama: https://ollama.ai/download
+2. 启动服务：
+   ```bash
+   ollama serve
+   ```
+3. 下载模型：
+   ```bash
+   ollama pull llama3.2
+   ```
+4. 无需配置 `.env`
+</details>
+
+### Step 3: 启动服务
+
+**方式 1: 命令行对话（最简单）**
 
 ```bash
-# Command-line chat (simplest)
-uv run openclaw agent chat "Hello, introduce yourself"
+# 单次对话
+uv run openclaw agent chat "你好，介绍一下自己"
 
-# Interactive mode (recommended for daily use)
-uv run openclaw agent interactive
-
-# Specify model
-uv run openclaw agent chat "Write code" --model anthropic/claude-opus-4-5
-
-# Use local Ollama (free)
-ollama serve  # In another terminal
-uv run openclaw agent chat "Hello" --model ollama/llama3.2
+# 指定模型
+uv run openclaw agent chat "帮我写代码" --model anthropic/claude-opus-4-5
 ```
 
-### 📖 Complete Guides
-
-- **[👋 START_HERE.md](START_HERE.md)** - 1-minute quick start
-- **[🚀 QUICK_START.md](QUICK_START.md)** - 5-minute complete guide  
-- **[📚 docs/](docs/)** - Full documentation
-
----
-
-## 💻 Usage Examples
-
-### Command-Line Usage
+**方式 2: 交互式模式（推荐日常使用）**
 
 ```bash
-# Basic chat
-uv run openclaw agent chat "What is Python?"
-
-# With specific model
-uv run openclaw agent chat "Write a function" --model anthropic/claude-opus-4-5
-
-# Interactive mode (multi-turn conversation)
+# 启动交互式对话
 uv run openclaw agent interactive
+
+# 多轮对话，输入 'exit' 或 'quit' 退出
 ```
 
-### Python Script
+**方式 3: API 服务器（用于集成）**
+
+```bash
+# 启动 REST API 服务
+uv run openclaw api start
+
+# 访问 API 文档: http://localhost:18789/docs
+# 兼容 OpenAI API 格式
+```
+
+**方式 4: Python 脚本（高级用法）**
 
 ```python
 import asyncio
@@ -126,26 +155,22 @@ from openclaw.agents import AgentRuntime, Session
 from pathlib import Path
 
 async def main():
-    # Create runtime (choose your provider)
     runtime = AgentRuntime(
-        model="anthropic/claude-opus-4-5",  # or any model
+        model="anthropic/claude-opus-4-5",  # 或其他模型
         max_tokens=2000,
         temperature=0.7
     )
     
-    # Create session
     session = Session(
         session_id="my-chat",
         workspace_dir=Path.cwd()
     )
     
-    # Send message
     response = await runtime.run_turn(
         session=session,
-        user_message="Hello! Introduce yourself."
+        user_message="Hello!"
     )
     
-    # Stream output
     async for event in response:
         if event["type"] == "text":
             print(event["text"], end="", flush=True)
@@ -153,16 +178,24 @@ async def main():
 asyncio.run(main())
 ```
 
-### API Server
+### 📖 完整文档
 
-```bash
-# Start API server
-uv run openclaw api start
+- **[START_HERE.md](START_HERE.md)** - 1 分钟入门
+- **[QUICK_START.md](QUICK_START.md)** - 详细指南  
+- **[docs/](docs/)** - 完整文档
 
-# Access API docs at http://localhost:18789/docs
-```
+---
 
-See [QUICK_START.md](QUICK_START.md) for more examples.
+## 🎯 支持的模型
+
+| Provider | 模型示例 | 使用方式 |
+|----------|---------|---------|
+| **Claude** | claude-opus-4-5, claude-sonnet-4-5 | `--model anthropic/claude-opus-4-5` |
+| **OpenAI** | gpt-4, gpt-4-turbo, gpt-3.5-turbo | `--model openai/gpt-4` |
+| **Gemini** | gemini-3-flash-preview, gemini-3-pro-preview | `--model google/gemini-3-flash-preview` |
+| **Ollama** | llama3.2, mistral, codellama | `--model ollama/llama3.2` |
+
+**完整模型列表**: 运行 `uv run openclaw agent models` 查看所有支持的模型
 
 ---
 
