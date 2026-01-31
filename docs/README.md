@@ -1,37 +1,43 @@
-# Documentation
+# OpenClaw Python - Documentation
 
-This folder contains all documentation for ClawdBot Python.
+Complete documentation for OpenClaw Python implementation.
 
-## Structure
+## 📚 Documentation Index
 
-```
-docs/
-├── guides/          # User guides and tutorials
-├── development/     # Development documentation
-└── archive/         # Historical/outdated documents
-```
+### Getting Started
+- [Main README](../README.md) - Project overview and quick start
+- [Installation Guide](setup/GEMINI_SETUP_GUIDE.md) - Gemini API setup
+- [Migration Guide](guides/MIGRATION_GUIDE.md) - Migrating from ClawdBot
 
-## Guides
+### Release Notes
+- [v0.6.0 Release Notes](RELEASE_NOTES_v0.6.0.md) - Latest release (Gemini 3, Settings, etc.)
+- [v0.5.0 Release Notes](RELEASE_NOTES_v0.5.0.md) - Advanced features
+- [Changelog](../CHANGELOG.md) - Complete version history
 
-User-facing documentation:
+### Guides
+- [Advanced Features Plan](guides/ADVANCED_FEATURES_PLAN.md)
+- [Production Ready Guide](guides/PRODUCTION_READY.md)
+- [Project Completion Report](guides/PROJECT_COMPLETION_REPORT.md)
+- [Rename Summary](guides/RENAME_SUMMARY.md)
+- [Project Status](guides/PROJECT_STATUS.md)
 
-- [Quick Start](guides/QUICKSTART.md) - Get started quickly
-- [Installation](guides/INSTALLATION.md) - Detailed installation guide
-- [Docker Quick Start](guides/DOCKER_QUICKSTART.md) - Docker usage
-- [Docker Security](guides/DOCKER_SECURITY.md) - Security considerations
-- [Docker Start](guides/START_DOCKER.md) - Starting with Docker
+### Testing
+- [Telegram Integration Test](testing/TELEGRAM_TEST_SUMMARY.md)
+- [Manual Test Scripts](../tests/manual/) - Test scripts for Gemini, Search, Telegram
 
-## Development
-
-Technical documentation for developers:
-
-- [Architecture](development/ARCHITECTURE.md) - System architecture
-- [Agent Implementation](development/AGENT_IMPLEMENTATION.md) - Agent details
-
-## Archive
-
-Historical documents kept for reference. These may be outdated.
+### Contributing
+- [Contributing Guide](../CONTRIBUTING.md) - How to contribute
+- [Code of Conduct](../CODE_OF_CONDUCT.md) - Community guidelines
 
 ---
 
-For the latest information, please refer to the main [README.md](../README.md).
+## 🦞 Quick Links
+
+- **Main Project**: https://github.com/openclaw/openclaw
+- **Python Implementation**: https://github.com/zhaoyuong/openclaw-python
+- **Website**: https://openclaw.ai
+
+---
+
+**Version**: 0.6.0  
+**Last Updated**: 2026-01-31
