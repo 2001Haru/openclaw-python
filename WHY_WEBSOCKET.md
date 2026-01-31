@@ -138,33 +138,100 @@ T=11s 服务器 → 客户端：{ type: "aborted" }
 
 **Gateway 的职责之一是广播系统事件**：
 
+**⚠️ 重要澄清**：Telegram Bot **不需要** 主动调用 Gateway，而是 Gateway **自动监听** Agent Runtime 的事件。
+
 ```python
-# 场景：Telegram 用户发送消息
+# 场景：Telegram 用户发送消息（正确的流程）
 
-# 1. Telegram Bot 收到消息
-telegram_bot.on_message(user_message)
+# ============================================
+# Telegram Bot 的代码（不知道 Gateway 存在）
+# ============================================
+class TelegramChannel:
+    async def on_message(self, update):
+        user_message = update.message.text
+        chat_id = update.message.chat_id
+        
+        # Bot 只做两件事：
+        # 1. 调用 Agent Runtime
+        async for event in agent_runtime.run_turn(session, user_message):
+            
+            # 2. 发送回复到 Telegram
+            if event.type == "text":
+                await telegram_api.send_message(chat_id, event.text)
+            
+            # ✅ Bot 的工作到此结束
+            # ❌ Bot 不需要调用 gateway.broadcast()
 
-# 2. Bot 调用 Agent
-async for event in agent_runtime.run_turn(session, user_message):
-    # 3. Bot 发送回复到 Telegram
-    await telegram_api.send_message(chat_id, event.text)
+
+# ============================================
+# Gateway 的代码（自动监听事件）
+# ============================================
+class GatewayServer:
+    def __init__(self, agent_runtime):
+        # Gateway 在初始化时注册为 Agent Runtime 的观察者
+        agent_runtime.add_event_listener(self.on_agent_event)
     
-    # 4. Gateway 同时广播事件到所有连接的客户端
-    gateway.broadcast("chat", {
-        "channel": "telegram",
-        "chatId": chat_id,
-        "event": event
-    })
+    async def on_agent_event(self, event):
+        """Agent Runtime 每产生一个事件，Gateway 自动收到"""
+        
+        # 自动广播事件到所有 WebSocket 客户端
+        await self.broadcast_to_all_clients("agent", {
+            "type": event.type,
+            "text": event.text,
+            "sessionKey": event.session_key
+        })
 
-# 5. Control UI 实时看到这条对话（即使不是 Control UI 发起的）
-# 6. CLI 工具也能监听到这个事件
-# 7. iOS App 也能收到推送
+
+# ============================================
+# 结果：
+# ============================================
+# 1. Telegram Bot 调用 Agent → Agent 产生事件
+# 2. Gateway 自动监听到事件 → 广播给所有 WebSocket 客户端
+# 3. Control UI 实时看到这条对话（即使不是 Control UI 发起的）
+# 4. CLI 工具也能监听到这个事件
+# 5. iOS App 也能收到推送
+
+# 关键点：
+# - Telegram Bot 不知道 Gateway 存在（只调用 Agent Runtime）
+# - Gateway 是 Agent Runtime 的观察者（自动捕获事件）
+# - 这是观察者模式（Observer Pattern）
+```
+
+**架构示意**：
+
+```
+Telegram Bot                Agent Runtime               Gateway
+     │                           │                         │
+     │                           │    订阅事件              │
+     │                           │←────────────────────────┤
+     │                           │                         │
+     ├──── run_turn() ──────────→│                         │
+     │                           │                         │
+     │                           ├── 事件1: thinking ─────→│
+     │                           │                         ├─→ WebSocket 客户端
+     │                           │                         │
+     │←──── event ───────────────┤                         │
+     │                           │                         │
+     ├── send to Telegram ───→   │                         │
+     │                           │                         │
+     │                           ├── 事件2: text ─────────→│
+     │                           │                         ├─→ WebSocket 客户端
+     │←──── event ───────────────┤                         │
+     │                           │                         │
+     ├── send to Telegram ───→   │                         │
+     │                           │                         │
+     
+关键理解：
+- Telegram Bot 与 Agent Runtime：直接函数调用（同进程）
+- Gateway 与 Agent Runtime：观察者关系（自动监听）
+- Gateway 不参与 Bot ↔ Agent 的通信
 ```
 
 **这是 HTTP 完全做不到的**：
 - ❌ HTTP 无法主动推送
 - ❌ 客户端需要每隔 1 秒轮询一次 `GET /events`（极其低效）
 - ✅ WebSocket 服务器直接推送，0 延迟
+- ✅ 即使消息来自 Telegram Bot，Control UI 也能实时看到
 
 ---
 

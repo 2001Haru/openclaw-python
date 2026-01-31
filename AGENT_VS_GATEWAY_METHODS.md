@@ -459,3 +459,8 @@ $ wscat -c ws://localhost:8765
 - 期间产生大量实时事件（thinking、tool_use、text tokens）
 - HTTP 无法做到流式推送，WebSocket 是唯一选择
 - 既然 Agent 用了 WebSocket，其他方法也统一用 WebSocket（简化客户端）
+
+**重要澄清**：
+- Gateway 的事件广播不是 Telegram Bot 主动调用的
+- Gateway 使用观察者模式，自动监听 Agent Runtime 的事件
+- 详见：[GATEWAY_EVENT_BROADCAST.md](GATEWAY_EVENT_BROADCAST.md)
