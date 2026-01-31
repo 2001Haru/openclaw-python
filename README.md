@@ -298,12 +298,18 @@ TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
 
 **步骤 3：启动 Bot 服务（重要）**
 ```bash
-# 启动 Telegram Bot 服务
-uv run python tests/manual/test_telegram_restricted.py
+# 启动 Telegram Bot 服务（正式版）
+uv run python examples/05_telegram_bot.py
 
 # ✅ 看到以下输出表示成功：
-# Telegram Bot 启动成功！
-# Bot 用户名: @myopenclaw_bot
+# 🤖 ClawdBot Telegram Bot Example
+# ==================================================
+# 🚀 Starting Telegram bot...
+# 📱 Send a message to your bot on Telegram
+#
+# ✅ Bot started!
+#    Connected: True
+#    Healthy: True
 #
 # ⚠️ 保持这个终端窗口打开！
 # Bot 需要持续运行才能接收和回复消息
@@ -326,7 +332,7 @@ Bot: [AI 生成并回复代码]
 **⚠️ 重要提示：**
 - Bot 服务需要**持续运行**才能接收消息
 - 不要关闭启动 Bot 的终端窗口
-- 如果关闭了，重新运行 `uv run python tests/manual/test_telegram_restricted.py`
+- 如果关闭了，重新运行 `uv run python examples/05_telegram_bot.py`
 - 生产环境建议使用 `screen`、`tmux` 或 `systemd` 保持后台运行
 
 ### 使用本地 Ollama（免费方案）
