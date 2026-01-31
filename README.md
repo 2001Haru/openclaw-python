@@ -109,22 +109,78 @@ CLAWDBOT_LOG_LEVEL=INFO       # 日志级别
 - 永远不要分享你的 API Keys
 - 生产环境建议使用密钥管理服务
 
-### 第三步：启动服务（3 种方式）
+### 第三步：启动服务
 
-#### 方式 1️⃣：命令行对话（最简单）
+---
+
+## ⭐ 推荐方式：通过 Telegram Bot 使用（最实用）
+
+**这是最方便的使用方式！** 在手机或电脑上通过 Telegram 直接与 AI 对话。
+
+### 前提条件
+确保已配置：
+- ✅ 至少一个 LLM API Key（步骤二）
+- ✅ Telegram Bot Token（步骤二中的 Telegram 配置）
+
+### 启动 Telegram Bot 服务
 
 ```bash
-# 单次对话
+# 🚀 启动 Telegram Bot（推荐）
+uv run python tests/manual/test_telegram_restricted.py
+
+# 看到以下输出表示启动成功：
+# ✅ Telegram Bot 启动成功！
+# Bot 用户名: @你的bot用户名
+# 现在可以在 Telegram 中搜索并开始对话了
+```
+
+**⚠️ 重要：这是一个持续运行的服务**
+- 启动后会一直运行，等待 Telegram 消息
+- 需要保持终端窗口打开
+- 按 `Ctrl+C` 可以停止服务
+
+### 在 Telegram 中使用
+
+1. 打开 Telegram（手机或电脑）
+2. 搜索你的 bot 用户名（例如：`@myopenclaw_bot`）
+3. 点击 **Start** 开始对话
+4. 直接发送消息，AI 会回复你！
+
+**示例对话：**
+```
+你: 你好，能帮我写个 Python 函数吗？
+Bot: 当然可以！你需要什么样的函数？
+
+你: 一个计算斐波那契数列的函数
+Bot: [AI 生成代码并回复]
+
+你: 谢谢！
+Bot: 不客气！还有其他问题吗？
+```
+
+---
+
+## 其他使用方式
+
+### 方式 1️⃣：命令行单次对话（快速测试）
+
+```bash
+# 单次对话（不是服务，命令执行完就结束）
 uv run openclaw agent chat "你好，请介绍一下自己"
 
 # 指定模型
 uv run openclaw agent chat "帮我写个 Python 函数" --model anthropic/claude-opus-4-5
 ```
 
-#### 方式 2️⃣：交互式模式（推荐日常使用）⭐
+**特点：**
+- ❌ 不是服务，执行完就结束
+- ✅ 适合快速测试
+- ❌ 不支持多轮对话
+
+### 方式 2️⃣：交互式终端模式（在终端对话）
 
 ```bash
-# 启动交互式对话
+# 启动交互式对话（持续运行，直到输入 /quit）
 uv run openclaw agent interactive
 
 # 然后你可以：
@@ -133,10 +189,15 @@ uv run openclaw agent interactive
 # - 输入 /quit 退出
 ```
 
-#### 方式 3️⃣：API 服务器（用于集成）
+**特点：**
+- ❌ 不是网络服务，只是终端界面
+- ✅ 支持多轮对话
+- ✅ 适合在服务器上使用
+
+### 方式 3️⃣：HTTP API 服务器（应用集成）⭐
 
 ```bash
-# 启动 REST API 服务
+# 🚀 启动 HTTP API 服务（真正的网络服务）
 uv run openclaw api start
 
 # 服务启动后：
@@ -145,45 +206,79 @@ uv run openclaw api start
 # - 支持 OpenAI 兼容接口
 ```
 
-### 第四步：连接 Telegram（可选）
+**特点：**
+- ✅ 真正的网络服务，持续运行
+- ✅ 其他程序可以通过 HTTP 调用
+- ✅ 适合集成到应用中
+- ⚠️ 需要保持终端运行，按 `Ctrl+C` 停止
 
-如果你想通过 Telegram 使用 OpenClaw：
+### 📱 如何创建 Telegram Bot（首次使用）
 
-**1. 创建 Telegram Bot**
+如果你还没有创建 Telegram Bot，按以下步骤操作：
+
+**步骤 1：在 Telegram 中创建 Bot**
 ```bash
-# 在 Telegram 中搜索并打开 @BotFather
-# 发送以下命令：
-/newbot
+1. 打开 Telegram，搜索 @BotFather
+2. 点击开始对话，发送命令：
+   /newbot
 
-# 按照提示：
-# 1. 输入 bot 名称（例如：My OpenClaw Bot）
-# 2. 输入 bot 用户名（必须以 bot 结尾，例如：myopenclaw_bot）
-# 3. 复制获得的 token
+3. 按照提示操作：
+   问题：What's your bot's name?
+   回答：My OpenClaw Bot（你的 bot 名称）
+   
+   问题：What's your bot's username?
+   回答：myopenclaw_bot（必须以 bot 结尾）
+
+4. 创建成功后，@BotFather 会给你一个 token：
+   1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+   
+   ⚠️ 保存好这个 token！
 ```
 
-**2. 配置 Token**
+**步骤 2：配置 Token 到 .env**
 ```bash
-# 编辑 .env 文件，添加：
-TELEGRAM_BOT_TOKEN=你的token
+# 编辑 .env 文件
+nano .env
 
-# 例如：
+# 添加或修改这一行：
 TELEGRAM_BOT_TOKEN=1234567890:ABCdefGHIjklMNOpqrsTUVwxyz
+#                  ↑ 替换成你从 @BotFather 获得的 token
+
+# 保存并退出
 ```
 
-**3. 启动 Telegram Bot**
+**步骤 3：启动 Bot 服务（重要）**
 ```bash
-# 使用提供的测试脚本（受限模式，安全）
+# 启动 Telegram Bot 服务
 uv run python tests/manual/test_telegram_restricted.py
 
-# 或者集成到你的应用中
+# ✅ 看到以下输出表示成功：
+# Telegram Bot 启动成功！
+# Bot 用户名: @myopenclaw_bot
+#
+# ⚠️ 保持这个终端窗口打开！
+# Bot 需要持续运行才能接收和回复消息
 ```
 
-**4. 在 Telegram 中使用**
+**步骤 4：在 Telegram 中开始对话**
 ```bash
-# 1. 在 Telegram 搜索你的 bot 用户名
-# 2. 点击 Start 开始对话
-# 3. 直接发送消息即可与 AI 对话
+1. 在 Telegram 搜索你的 bot 用户名（@myopenclaw_bot）
+2. 点击 "Start" 或发送 /start
+3. 现在可以直接发消息了！
+
+示例：
+你: 你好
+Bot: 你好！我是 OpenClaw 助手，有什么可以帮你的？
+
+你: 帮我写个 Python 函数
+Bot: [AI 生成并回复代码]
 ```
+
+**⚠️ 重要提示：**
+- Bot 服务需要**持续运行**才能接收消息
+- 不要关闭启动 Bot 的终端窗口
+- 如果关闭了，重新运行 `uv run python tests/manual/test_telegram_restricted.py`
+- 生产环境建议使用 `screen`、`tmux` 或 `systemd` 保持后台运行
 
 ### 使用本地 Ollama（免费方案）
 
