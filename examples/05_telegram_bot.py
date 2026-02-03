@@ -15,8 +15,8 @@ Prerequisites:
 
 import asyncio
 import os
-from dotenv import load_dotenv  # 新增这一行
-load_dotenv()                   # 强制读取根目录下的 .env 文件
+from dotenv import load_dotenv  
+load_dotenv()  # 强制读取根目录下的 .env 文件
 from pathlib import Path
 
 from openclaw.agents.runtime import AgentRuntime

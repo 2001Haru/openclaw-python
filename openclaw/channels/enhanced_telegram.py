@@ -40,7 +40,9 @@ class EnhancedTelegramChannel(ChannelPlugin):
         self._bot_token: str | None = None
         self._polling_task: asyncio.Task | None = None
 
-        self._streaming_states = {}  # 【新增】用于记录 {session_id: {"msg_id": xxx, "full_content": yyy}}
+        self._streaming_states = (
+            {}
+        )  # 【新增】用于记录 {session_id: {"msg_id": xxx, "full_content": yyy}}
 
         # Setup connection manager with reconnection
         self._setup_connection_manager(
@@ -74,7 +76,6 @@ class EnhancedTelegramChannel(ChannelPlugin):
         else:
             # Fallback to direct connection
             await self._do_connect()
-
 
     async def _do_connect(self) -> None:
         """Internal connection implementation"""
@@ -246,7 +247,7 @@ class EnhancedTelegramChannel(ChannelPlugin):
         chat = message.chat
         sender = message.from_user
 
-        self._last_chat_id = str(chat.id) # 【新增】临时记住是谁在说话
+        self._last_chat_id = str(chat.id)  # 【新增】临时记住是谁在说话
 
         # Determine chat type
         chat_type = "direct"
@@ -288,7 +289,7 @@ class EnhancedTelegramChannel(ChannelPlugin):
 
         text = event.data.get("delta", {}).get("text", "")
         session_id = event.session_id
-        
+
         if not text or not hasattr(self, "_last_chat_id"):
             return
 
@@ -297,21 +298,18 @@ class EnhancedTelegramChannel(ChannelPlugin):
             # 1. 发送第一个气泡并获取 ID
             msg_id = await self.send_text(self._last_chat_id, text)
             # 2. 存入状态，记录这个气泡的 ID 和目前的内容
-            self._streaming_states[session_id] = {
-                "msg_id": msg_id,
-                "full_content": text
-            }
+            self._streaming_states[session_id] = {"msg_id": msg_id, "full_content": text}
         else:
             # 3. 如果已经有气泡了，就更新它
             state = self._streaming_states[session_id]
             state["full_content"] += text
-            
+
             # 调用 Telegram 原生接口进行编辑
             try:
                 await self._app.bot.edit_message_text(
                     chat_id=int(self._last_chat_id),
                     message_id=int(state["msg_id"]),
-                    text=state["full_content"]
+                    text=state["full_content"],
                 )
             except Exception as e:
                 # 忽略频繁更新导致的 Telegram 报错（常见于流太快时）

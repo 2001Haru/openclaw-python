@@ -5,7 +5,6 @@ Enhanced Agent runtime with multi-provider support
 import asyncio
 import logging
 from collections.abc import AsyncIterator
-from typing import Any
 
 from ..events import Event, EventType
 from .auth import AuthProfile, ProfileStore, RotationManager
@@ -162,17 +161,17 @@ class MultiProviderRuntime:
     def add_event_listener(self, listener):
         """
         Register an event listener (observer pattern)
-        
+
         The listener will be called for every AgentEvent produced during run_turn.
         This allows components like Gateway to observe agent events without direct coupling.
-        
+
         Args:
             listener: Callable that accepts AgentEvent. Can be sync or async.
-        
+
         Example:
             async def on_agent_event(event: AgentEvent):
                 print(f"Agent event: {event.type}")
-            
+
             agent_runtime.add_event_listener(on_agent_event)
         """
         self.event_listeners.append(listener)
@@ -186,7 +185,7 @@ class MultiProviderRuntime:
 
     async def _notify_observers(self, event: Event):
         """Notify all registered observers of an event"""
-        print(f"DEBUG: 当前共有 {len(self.event_listeners)} 个监听器正在运行") # 加入这行
+        print(f"DEBUG: 当前共有 {len(self.event_listeners)} 个监听器正在运行")  # 加入这行
         for listener in self.event_listeners:
             try:
                 if asyncio.iscoroutinefunction(listener):
@@ -331,7 +330,7 @@ class MultiProviderRuntime:
             type=EventType.AGENT_STARTED,
             source="agent-runtime",
             session_id=session.session_id if session else None,
-            data={"phase": "start"}
+            data={"phase": "start"},
         )
         await self._notify_observers(event)
         yield event
@@ -402,10 +401,12 @@ class MultiProviderRuntime:
                                     type=EventType.AGENT_TEXT,
                                     source="agent-runtime",
                                     session_id=session.session_id if session else None,
-                                    data={"delta": {"type": "text_delta", "text": content_delta}}
+                                    data={"delta": {"type": "text_delta", "text": content_delta}},
                                 )
                                 await self._notify_observers(event)
-                                print(f"DEBUG: Runtime 正在向 Telegram 推送文本: {text[:10]}...") # 加入这行
+                                print(
+                                    f"DEBUG: Runtime 正在向 Telegram 推送文本: {text[:10]}..."
+                                )  # 加入这行
                                 yield event
                         else:
                             # No thinking extraction, stream as-is
@@ -413,10 +414,12 @@ class MultiProviderRuntime:
                                 type=EventType.AGENT_TEXT,
                                 source="agent-runtime",
                                 session_id=session.session_id if session else None,
-                                data={"delta": {"type": "text_delta", "text": text}}
+                                data={"delta": {"type": "text_delta", "text": text}},
                             )
                             await self._notify_observers(event)
-                            print(f"DEBUG: Runtime 正在向 Telegram 推送文本: {text[:10]}...") # 加入这行
+                            print(
+                                f"DEBUG: Runtime 正在向 Telegram 推送文本: {text[:10]}..."
+                            )  # 加入这行
                             yield event
 
                     elif response.type == "tool_call":
@@ -527,7 +530,7 @@ class MultiProviderRuntime:
                     type=EventType.AGENT_TURN_COMPLETE,
                     source="agent-runtime",
                     session_id=session.session_id if session else None,
-                    data={"phase": "end"}
+                    data={"phase": "end"},
                 )
                 await self._notify_observers(event)
                 yield event
@@ -574,7 +577,7 @@ class MultiProviderRuntime:
                     )
                     await self._notify_observers(event)
                     yield event
-                    
+
                     event = AgentEvent("lifecycle", {"phase": "end"})
                     await self._notify_observers(event)
                     yield event
@@ -591,7 +594,7 @@ class MultiProviderRuntime:
                     )
                     await self._notify_observers(event)
                     yield event
-                    
+
                     event = AgentEvent("lifecycle", {"phase": "end"})
                     await self._notify_observers(event)
                     yield event
