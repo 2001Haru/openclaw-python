@@ -9,6 +9,7 @@ from typing import Any
 
 from telegram import Update
 from telegram.ext import Application, ContextTypes, MessageHandler, filters
+from openclaw.events import EventType
 
 from .base import ChannelCapabilities, ChannelPlugin, InboundMessage
 from .connection import ReconnectConfig
@@ -316,17 +317,22 @@ class EnhancedTelegramChannel(ChannelPlugin):
 
     # [NEW] Deal with streaming text updates
     async def on_event(self, event: Any) -> None:
+        # Debug log
+        print(f"📱 [Telegram Channel Received] Type: {event.type}")
+        
         # ensure the text delta event
-        if str(event.type).lower() != "eventtype.agent_text":
-            if str(event.type).lower() == "eventtype.agent_turn_complete":
-                # done with this session, clean up state
+        if event.type != EventType.AGENT_TEXT:
+            if event.type == EventType.AGENT_TURN_COMPLETE:
+                # Clean up streaming state
                 self._streaming_states.pop(event.session_id, None)
             return
 
         text = event.data.get("delta", {}).get("text", "")
         session_id = event.session_id
 
-        if not text or not hasattr(self, "_last_chat_id"):
+        chat_id = self._last_chat_id if hasattr(self, "_last_chat_id") else session_id.replace("telegram-", "")
+
+        if not text or not chat_id:
             return
 
         # Check if we have an existing message to edit
