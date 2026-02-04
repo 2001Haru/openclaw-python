@@ -187,6 +187,8 @@ class MultiProviderRuntime:
 
     async def _notify_observers(self, event: Event):
         """Notify all registered observers of an event"""
+        # Debug log
+        print(f"🔍 [Runtime Event] Type: {event.type}, Data: {event.data}")
         for listener in self.event_listeners:
             try:
                 if asyncio.iscoroutinefunction(listener):
