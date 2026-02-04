@@ -383,6 +383,19 @@ GEMINI_MODELS = {
         "context_window": 1000000,
         "max_output": 8192,
         "features": ["search"],
+        "stable": True,
+    },
+    "gemini-flash-latest": {
+        "name": "Gemini 1.5 Flash (Latest)",
+        "context_window": 1000000,
+        "max_output": 8192,
+        "features": ["search", "vision"],
+    },
+    "gemini-2.0-flash-lite": {
+        "name": "Gemini 2.0 Flash Lite",
+        "context_window": 1000000,
+        "max_output": 8192,
+        "features": ["search"],
     },
     # Add models/ prefix versions
     "models/gemini-3-flash-preview": {"alias": "gemini-3-flash-preview"},
@@ -390,4 +403,6 @@ GEMINI_MODELS = {
     "models/gemini-2.5-flash": {"alias": "gemini-2.5-flash"},
     "models/gemini-2.5-pro": {"alias": "gemini-2.5-pro"},
     "models/gemini-2.0-flash": {"alias": "gemini-2.0-flash"},
+    "models/gemini-flash-latest": {"alias": "gemini-flash-latest"},
+    "models/gemini-2.0-flash-lite": {"alias": "gemini-2.0-flash-lite"},
 }
