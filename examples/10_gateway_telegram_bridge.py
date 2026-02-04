@@ -61,6 +61,9 @@ Usage:
 
 import asyncio
 import logging
+from dotenv import load_dotenv
+load_dotenv()   # Load environment variables from .env file
+#It might be not neccessary in macOS. However, in Windows it is useful.
 import os
 from pathlib import Path
 
@@ -109,7 +112,7 @@ class OpenClawServer:
 
         # Agent Runtime (shared by all channels)
         self.agent_runtime = AgentRuntime(
-            model=config.agent.get("model", "gemini/gemini-3-flash-preview"),
+            model=config.agent.model,
             enable_context_management=True,
             max_retries=3,
         )
@@ -195,8 +198,25 @@ class OpenClawServer:
 
         # Setup channels
         self.setup_channels()
-
         self.running = True
+
+        gateway_task = asyncio.create_task(self.gateway.start(start_channels=True))
+    
+        await asyncio.sleep(0.1)  # Allow some time for startup
+
+        # [NEW] Link channels to AgentRuntime events
+        linked_count = 0
+        for channel_id in self.channel_manager.list_channels():
+            channel = self.channel_manager.get_channel(channel_id)
+            if channel and hasattr(channel, "on_event"):
+                self.agent_runtime.add_event_listener(channel.on_event)
+                logger.info(f"🔗 [Circuit Link] Successfully linked {channel_id} to Agent events")
+                linked_count += 1
+                
+        if linked_count == 0:
+            logger.error("❌ Circuit Link Failed: No active channels found to link!")
+
+        await gateway_task
 
         # Print status
         print()
