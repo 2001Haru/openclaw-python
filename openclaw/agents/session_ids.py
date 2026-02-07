@@ -8,7 +8,6 @@ from __future__ import annotations
 import re
 import uuid
 
-
 # Session ID regex (UUID v4 format, matches TS sessions-helpers.ts line 114)
 SESSION_ID_RE = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
