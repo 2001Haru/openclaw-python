@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class ImageMetadata:
     """Image metadata (matches TS ImageMetadata)."""
+
     width: int
     height: int
     format: str | None = None
@@ -33,6 +34,7 @@ class ImageMetadata:
 @dataclass
 class OptimizedImage:
     """Optimized image result."""
+
     buffer: bytes
     optimized_size: int
     resize_side: int
@@ -55,6 +57,7 @@ class ImageProcessor:
     - sips (macOS) fallback for HEIC
     - ImageMagick fallback
     """
+
     @staticmethod
     def has_pillow() -> bool:
         """Check if Pillow is available."""
@@ -174,6 +177,7 @@ class ImageProcessor:
             format=img.format,
             has_alpha=img.mode in ("RGBA", "LA", "PA"),
         )
+
     @staticmethod
     async def has_alpha_channel(buffer: bytes) -> bool:
         """
@@ -190,6 +194,7 @@ class ImageProcessor:
             return metadata.has_alpha
         except Exception:
             return False
+
     @staticmethod
     async def resize_to_jpeg(
         buffer: bytes,

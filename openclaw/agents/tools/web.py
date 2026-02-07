@@ -121,7 +121,10 @@ class WebSearchTool(AgentTool):
         return {
             "type": "object",
             "properties": {
-                "query": {"type": "string", "description": "Search query for finding information on the web"},
+                "query": {
+                    "type": "string",
+                    "description": "Search query for finding information on the web",
+                },
                 "count": {
                     "type": "integer",
                     "description": "Number of results to return (default: 5, max: 10)",
@@ -135,7 +138,7 @@ class WebSearchTool(AgentTool):
 
     async def execute(self, params: dict[str, Any]) -> ToolResult:
         """Search web using DuckDuckGo
-        
+
         Returns results in format aligned with TypeScript version's Brave Search output:
         - title: Page title
         - url: Page URL
@@ -163,15 +166,11 @@ class WebSearchTool(AgentTool):
             if search_results:
                 formatted = []
                 for i, result in enumerate(search_results, 1):
-                    title = result.get('title', 'No title')
-                    url = result.get('href', '')
-                    description = result.get('body', 'No description')
-                    
-                    formatted.append(
-                        f"{i}. **{title}**\n"
-                        f"   URL: {url}\n"
-                        f"   {description}\n"
-                    )
+                    title = result.get("title", "No title")
+                    url = result.get("href", "")
+                    description = result.get("body", "No description")
+
+                    formatted.append(f"{i}. **{title}**\n" f"   URL: {url}\n" f"   {description}\n")
 
                 content = "\n".join(formatted)
                 return ToolResult(
@@ -183,9 +182,9 @@ class WebSearchTool(AgentTool):
                         "count": len(search_results),
                         "results": [
                             {
-                                "title": r.get('title', ''),
-                                "url": r.get('href', ''),
-                                "description": r.get('body', ''),
+                                "title": r.get("title", ""),
+                                "url": r.get("href", ""),
+                                "description": r.get("body", ""),
                             }
                             for r in search_results
                         ],

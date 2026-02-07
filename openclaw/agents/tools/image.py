@@ -11,6 +11,7 @@ Features:
 - Data URL support
 - Sandbox path validation
 """
+
 from __future__ import annotations
 
 import base64
@@ -273,11 +274,7 @@ class ImageTool(AgentTool):
 
             api_key = os.getenv("ANTHROPIC_API_KEY")
             if not api_key:
-                return ToolResult(
-                    success=False,
-                    content="",
-                    error="ANTHROPIC_API_KEY not set"
-                )
+                return ToolResult(success=False, content="", error="ANTHROPIC_API_KEY not set")
 
             client = AsyncAnthropic(api_key=api_key)
 
@@ -322,11 +319,7 @@ class ImageTool(AgentTool):
             )
 
         except ImportError:
-            return ToolResult(
-                success=False,
-                content="",
-                error="anthropic package not installed"
-            )
+            return ToolResult(success=False, content="", error="anthropic package not installed")
         except Exception as e:
             logger.error(f"Claude image analysis failed: {e}")
             return ToolResult(success=False, content="", error=str(e))
@@ -353,11 +346,7 @@ class ImageTool(AgentTool):
 
             api_key = os.getenv("OPENAI_API_KEY")
             if not api_key:
-                return ToolResult(
-                    success=False,
-                    content="",
-                    error="OPENAI_API_KEY not set"
-                )
+                return ToolResult(success=False, content="", error="OPENAI_API_KEY not set")
 
             client = AsyncOpenAI(api_key=api_key)
 
@@ -370,9 +359,7 @@ class ImageTool(AgentTool):
                         "content": [
                             {
                                 "type": "image_url",
-                                "image_url": {
-                                    "url": f"data:{media_type};base64,{image_data}"
-                                },
+                                "image_url": {"url": f"data:{media_type};base64,{image_data}"},
                             },
                             {"type": "text", "text": prompt},
                         ],
@@ -398,11 +385,7 @@ class ImageTool(AgentTool):
             )
 
         except ImportError:
-            return ToolResult(
-                success=False,
-                content="",
-                error="openai package not installed"
-            )
+            return ToolResult(success=False, content="", error="openai package not installed")
         except Exception as e:
             logger.error(f"OpenAI image analysis failed: {e}")
             return ToolResult(success=False, content="", error=str(e))

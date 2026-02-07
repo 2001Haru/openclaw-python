@@ -64,7 +64,9 @@ class GetReplyOptions:
     on_reasoning_stream: Callable[[ReplyPayload], Awaitable[None] | None] | None = None
 
     # Callback for block reply
-    on_block_reply: Callable[[ReplyPayload, BlockReplyContext | None], Awaitable[None] | None] | None = None
+    on_block_reply: (
+        Callable[[ReplyPayload, BlockReplyContext | None], Awaitable[None] | None] | None
+    ) = None
 
     # Callback for tool result
     on_tool_result: Callable[[ReplyPayload], Awaitable[None] | None] | None = None

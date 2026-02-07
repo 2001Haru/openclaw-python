@@ -3,6 +3,7 @@ MIME type detection and utilities
 
 Matches TypeScript src/media/mime.ts
 """
+
 from __future__ import annotations
 
 import logging
@@ -15,6 +16,7 @@ logger = logging.getLogger(__name__)
 
 class MediaKind(str, Enum):
     """Media type classification (matches TS MediaKind)."""
+
     IMAGE = "image"
     AUDIO = "audio"
     VIDEO = "video"
@@ -132,6 +134,7 @@ def detect_mime(file_path: Path | str | None = None, buffer: bytes | None = None
     if buffer:
         try:
             import filetype
+
             kind = filetype.guess(buffer)
             if kind:
                 return kind.mime

@@ -23,7 +23,7 @@ from .providers import (
     OllamaProvider,
     OpenAIProvider,
     VectorEngineProvider,
-) 
+)
 from .queuing import QueueManager
 from .session import Session
 from .thinking import ThinkingExtractor, ThinkingMode

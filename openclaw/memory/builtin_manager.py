@@ -13,9 +13,7 @@ logger = logging.getLogger(__name__)
 class BuiltinMemoryManager:
     """Manages agent memory with vector and full-text search."""
 
-    def __init__(
-        self, agent_id: str, workspace_dir: Path, embedding_provider: str | None = None
-    ):
+    def __init__(self, agent_id: str, workspace_dir: Path, embedding_provider: str | None = None):
         self.agent_id = agent_id
         self.workspace_dir = workspace_dir
         self.embedding_provider = embedding_provider or "openai"

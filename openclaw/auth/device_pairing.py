@@ -5,6 +5,7 @@ Matches TypeScript src/infra/device-pairing.ts
 
 Provides secure device registration and token-based authentication.
 """
+
 from __future__ import annotations
 
 import json
@@ -18,6 +19,7 @@ from typing import Any
 @dataclass
 class DeviceAuthToken:
     """Device authentication token (matches TS DeviceAuthToken)."""
+
     token: str
     role: str
     scopes: list[str]
@@ -38,6 +40,7 @@ class DeviceAuthToken:
 @dataclass
 class DevicePairingRequest:
     """Pending device pairing request (matches TS DevicePairingPendingRequest)."""
+
     request_id: str
     device_id: str
     public_key: str
@@ -52,6 +55,7 @@ class DevicePairingRequest:
     silent: bool = False
     is_repair: bool = False
     ts: int = field(default_factory=lambda: int(time.time() * 1000))
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dict for JSON serialization."""
         return asdict(self)
@@ -60,6 +64,7 @@ class DevicePairingRequest:
 @dataclass
 class PairedDevice:
     """Paired device (matches TS PairedDevice)."""
+
     device_id: str
     public_key: str
     display_name: str | None = None
@@ -73,6 +78,7 @@ class PairedDevice:
     tokens: dict[str, DeviceAuthToken] = field(default_factory=dict)
     created_at_ms: int = field(default_factory=lambda: int(time.time() * 1000))
     approved_at_ms: int = field(default_factory=lambda: int(time.time() * 1000))
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dict for JSON serialization."""
         data = asdict(self)
@@ -156,6 +162,7 @@ class DevicePairingManager:
         with open(tmp_paired, "w") as f:
             json.dump(paired_data, f, indent=2)
         tmp_paired.replace(self.paired_path)
+
     def create_pairing_request(
         self,
         device_id: str,
@@ -248,6 +255,7 @@ class DevicePairingManager:
             self._save_state()
             return True
         return False
+
     def validate_token(
         self,
         device_id: str,
@@ -334,6 +342,7 @@ class DevicePairingManager:
             self._save_state()
             return True
         return False
+
     def list_pending(self) -> list[DevicePairingRequest]:
         """List pending pairing requests."""
         # Clean expired

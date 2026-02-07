@@ -3,6 +3,7 @@ Memory search and retrieval tools
 
 Matches TypeScript src/agents/tools/memory-tool.ts
 """
+
 from __future__ import annotations
 
 import logging
@@ -48,6 +49,7 @@ class MemorySearchTool(AgentTool):
         self.config = config
         self.session_key = session_key
         self._manager: MemorySearchManager | None = None
+
     def get_schema(self) -> dict[str, Any]:
         """Get JSON schema for tool parameters."""
         return {
@@ -170,6 +172,7 @@ class MemoryGetTool(AgentTool):
         self.config = config
         self.session_key = session_key
         self._manager: MemorySearchManager | None = None
+
     def get_schema(self) -> dict[str, Any]:
         """Get JSON schema for tool parameters."""
         return {

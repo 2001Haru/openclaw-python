@@ -4,6 +4,7 @@ Media loader
 Loads media from files, URLs, and data URLs.
 Matches TypeScript src/web/media.ts
 """
+
 from __future__ import annotations
 
 import base64
@@ -35,6 +36,7 @@ class MediaResult:
         kind: Media kind (image/audio/video/document)
         file_name: Original file name
     """
+
     buffer: bytes
     content_type: str | None
     kind: MediaKind
@@ -52,6 +54,7 @@ class MediaLoader:
     - Size limits
     - MIME detection
     """
+
     def __init__(
         self,
         max_bytes: int | None = None,
@@ -136,6 +139,7 @@ class MediaLoader:
             kind=kind,
             file_name=None,
         )
+
     async def _load_http_url(self, url: str) -> MediaResult:
         """Load from HTTP/HTTPS URL."""
         async with httpx.AsyncClient(follow_redirects=True, timeout=30.0) as client:

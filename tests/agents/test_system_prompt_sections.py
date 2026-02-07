@@ -1,6 +1,7 @@
 """Tests for system prompt section builders"""
 
 import pytest
+
 from openclaw.agents.system_prompt_sections import (
     CORE_TOOL_SUMMARIES,
     SILENT_REPLY_TOKEN,
@@ -292,8 +293,16 @@ class TestCoreToolSummaries:
         assert len(CORE_TOOL_SUMMARIES) >= 28
 
     def test_essential_tools(self):
-        for tool in ["read_file", "write_file", "edit_file", "bash", "web_search",
-                      "gateway", "agents_list", "session_status"]:
+        for tool in [
+            "read_file",
+            "write_file",
+            "edit_file",
+            "bash",
+            "web_search",
+            "gateway",
+            "agents_list",
+            "session_status",
+        ]:
             assert tool in CORE_TOOL_SUMMARIES
             assert len(CORE_TOOL_SUMMARIES[tool]) > 0
 
